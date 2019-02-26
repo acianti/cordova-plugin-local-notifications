@@ -28,6 +28,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.v4.app.NotificationCompat;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.os.Build;
 
 import org.json.JSONObject;
 
@@ -119,16 +122,53 @@ public class Builder {
         int smallIcon = options.getSmallIcon();
         int ledColor  = options.getLedColor();
         NotificationCompat.Builder builder;
+        //android 8.0 oreo
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Sets an ID for the notification, so it can be updated.
+            int notifyID = 1;
+            String CHANNEL_ID = "CanalPrincipal";// The id of the channel.
+            CharSequence name = "Princial";// The user-visible name of the channel.
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            if(sound == null){
+              importance = NotificationManager.IMPORTANCE_LOW;
+              CHANNEL_ID = "CanalPrincipalSilencioso";// The id of the channel.
+                name = "PrincialSilencioso";// The user-visible name of the channel.
+            }
+            NotificationChannel mChannel = new NotificationChannel(CHANNEL_ID, name, importance);
+            if (sound == null) {
+                mChannel.setDescription("Sin sonido");
+                mChannel.setSound(null,null);
+                mChannel.enableLights(false);
+                mChannel.setLightColor(Color.BLUE);
+                mChannel.enableVibration(false);
+            }
+            NotificationManager mNotificationManager =
+                    (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+                mNotificationManager.createNotificationChannel(mChannel);
+            // Issue the notification.
+            //mNotificationManager.notify(notifyID , notification);
+            builder =
+                    new NotificationCompat.Builder(context,CHANNEL_ID)
+                            .setDefaults(0)
+                            .setContentTitle(options.getTitle())
+                            .setContentText(options.getText())
+                            .setNumber(options.getBadgeNumber())
+                            .setTicker(options.getText())
+                            .setAutoCancel(options.isAutoClear())
+                            .setOngoing(options.isOngoing())
+                            .setColor(options.getColor());
+        }else{
+            builder = new NotificationCompat.Builder(context)
+                    .setDefaults(0)
+                    .setContentTitle(options.getTitle())
+                    .setContentText(options.getText())
+                    .setNumber(options.getBadgeNumber())
+                    .setTicker(options.getText())
+                    .setAutoCancel(options.isAutoClear())
+                    .setOngoing(options.isOngoing())
+                    .setColor(options.getColor());
 
-        builder = new NotificationCompat.Builder(context)
-                .setDefaults(0)
-                .setContentTitle(options.getTitle())
-                .setContentText(options.getText())
-                .setNumber(options.getBadgeNumber())
-                .setTicker(options.getText())
-                .setAutoCancel(options.isAutoClear())
-                .setOngoing(options.isOngoing())
-                .setColor(options.getColor());
+        }
 
         if (ledColor != 0) {
             builder.setLights(ledColor, options.getLedOnTime(), options.getLedOffTime());
